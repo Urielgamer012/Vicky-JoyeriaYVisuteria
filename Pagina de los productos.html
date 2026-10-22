@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Productos | VICKY</title>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600&family=Poppins:wght@300;400;500&display=swap" rel="stylesheet">
+    <script>
+        if (localStorage.getItem('theme') === 'dark') {
+            document.documentElement.setAttribute('data-theme', 'dark');
+        }
+    </script>
+    <style>
+        :root {
+            --rosa-principal: #f8d7da; 
+            --rosa-oscuro: #d4838f; 
+            --rosa-suave: #fff0f2;
+            --texto-oscuro: #2c2c2c; 
+            --blanco: #ffffff; 
+            --bg-card: #ffffff; 
+            --border-color: #eee;
+            --footer-bg: #faf4f5;
+            --footer-text: #888;
+            --modal-bg: #ffffff;
+        }
+        [data-theme="dark"] {
+            --rosa-principal: #4a2c30; 
+            --rosa-oscuro: #e09ba7; 
+            --rosa-suave: #1f1618;
+            --texto-oscuro: #f3f3f3; 
+            --blanco: #121212; 
+            --bg-card: #1a1a1a; 
+            --border-color: #333333;
+            --footer-bg: #161616;
+            --footer-text: #aaa;
+            --modal-bg: #1a1a1a;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; transition: background-color 0.3s, color 0.3s, border-color 0.3s; }
+        body { font-family: 'Poppins', sans-serif; color: var(--texto-oscuro); background-color: var(--blanco); overflow-x: hidden; }
+        
+        header { display: flex; justify-content: space-between; align-items: center; padding: 20px 8%; border-bottom: 1px solid var(--border-color); }
+        .logo { font-family: 'Playfair Display', serif; font-size: 24px; color: var(--rosa-oscuro); text-decoration: none; letter-spacing: 2px; }
+        nav ul { display: flex; list-style: none; gap: 20px; align-items: center; }
+        nav ul li a { text-decoration: none; color: var(--texto-oscuro); font-size: 13px; text-transform: uppercase; letter-spacing: 1px; cursor: pointer; }
+        nav ul li a:hover { opacity: 0.7; }
+        
+        /* Globo de notificación del carrito */
+        .cart-link { position: relative; display: inline-block; }
+        .cart-badge {
+            position: absolute; top: -10px; right: -15px; background-color: var(--rosa-oscuro); color: white;
+            font-size: 9px; font-weight: bold; padding: 2px 6px; border-radius: 50%; display: none;
+        }
+        .cart-badge.active { display: block; animation: pop 0.3s ease; }
+        @keyframes pop { 0% { transform: scale(0); } 50% { transform: scale(1.3); } 100% { transform: scale(1); } }
+
+        .theme-toggle { background: none; border: 1px solid var(--rosa-oscuro); color: var(--rosa-oscuro); width: 32px; height: 32px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+        
+        .container { padding: 50px 8%; }
+        h1 { font-family: 'Playfair Display', serif; font-size: 36px; margin-bottom: 10px; text-align: center; letter-spacing: 2px; }
+        .subtitle { text-align: center; font-size: 13px; opacity: 0.7; margin-bottom: 40px; text-transform: uppercase; letter-spacing: 2px; color: var(--rosa-oscuro); }
+        
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 25px; }
+        .card { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 8px; padding: 15px; text-align: center; display: flex; flex-direction: column; justify-content: space-between; cursor: pointer; position: relative; }
+        .card:hover { border-color: var(--rosa-oscuro); transform: translateY(-3px); box-shadow: 0 6px 15px rgba(0,0,0,0.05); }
+        
+        .card-img { background-color: var(--rosa-suave); height: 180px; display: flex; align-items: center; justify-content: center; margin-bottom: 12px; border-radius: 6px; overflow: hidden; }
+        .card-img img { width: 100%; height: 100%; object-fit: cover; border-radius: 6px; }
+
+        .card h3 { font-size: 14px; margin: 8px 0 4px; font-weight: 500; }
+        .card p.price { opacity: 0.8; font-size: 13px; margin-bottom: 12px; font-weight: 600; color: var(--rosa-oscuro); }
+        
+        .btn { background-color: var(--rosa-oscuro); color: white; border: none; padding: 8px 16px; border-radius: 20px; font-size: 10px; cursor: pointer; text-transform: uppercase; letter-spacing: 1px; z-index: 2; width: 100%; display: block; text-align: center; margin-top: 5px; }
+        .btn:hover { opacity: 0.9; }
+        .btn-secondary { background-color: transparent; border: 1px solid var(--rosa-oscuro); color: var(--rosa-oscuro); }
+
+        /* ======== CARRITO POP-OUT LATERAL ======== */
+        .cart-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 2999; display: none; backdrop-filter: blur(2px); }
+        .cart-overlay.open { display: block; }
+        
+        .side-cart {
+            position: fixed; top: 0; right: -450px; width: 100%; max-width: 400px; height: 100vh;
+            background-color: var(--modal-bg); box-shadow: -5px 0 25px rgba(0,0,0,0.1);
+            z-index: 3000; transition: right 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+            display: flex; flex-direction: column;
+        }
+        .side-cart.open { right: 0; }
+        
+        .side-cart-header { padding: 20px; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; }
+        .side-cart-header h2 { font-family: 'Playfair Display', serif; font-size: 20px; }
+        .close-cart { font-size: 28px; cursor: pointer; color: var(--rosa-oscuro); line-height: 1; }
+        
+        .side-cart-items { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 15px; }
+        .side-cart-empty { text-align: center; opacity: 0.6; margin-top: 50px; font-size: 13px; }
+        
+        .cart-item-row { display: flex; gap: 15px; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 15px; }
+        .cart-item-img { width: 60px; height: 60px; object-fit: cover; border-radius: 8px; background: var(--rosa-suave); }
+        .cart-item-details { flex: 1; text-align: left; }
+        .cart-item-title { font-size: 12px; font-weight: 500; margin-bottom: 4px; }
+        .cart-item-price { font-size: 12px; color: var(--rosa-oscuro); font-weight: 600; }
+        .remove-item { font-size: 10px; color: red; cursor: pointer; margin-top: 5px; opacity: 0.7; }
+        
+        .side-cart-footer { padding: 20px; border-top: 1px solid var(--border-color); background: var(--modal-bg); }
+        .cart-total { display: flex; justify-content: space-between; font-weight: 600; font-size: 16px; margin-bottom: 15px; }
+        
+        /* Modales */
+        .modal { display: none; position: fixed; z-index: 4000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.6); backdrop-filter: blur(4px); align-items: center; justify-content: center; padding: 20px; }
+        .modal.active { display: flex; }
+        .modal-content { background-color: var(--modal-bg); border: 1px solid var(--border-color); border-radius: 12px; width: 100%; max-width: 650px; padding: 30px; position: relative; box-shadow: 0 10px 30px rgba(0,0,0,0.2); animation: modalFadeIn 0.3s ease; text-align: center; }
+        .modal-content.small { max-width: 400px; }
+        @keyframes modalFadeIn { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
+        .close-modal { position: absolute; top: 15px; right: 20px; font-size: 24px; cursor: pointer; color: var(--rosa-oscuro); }
+        
+        .modal-body-product { display: grid; grid-template-columns: 1fr 1fr; gap: 25px; align-items: center; text-align: left; }
+        @media (max-width: 600px) { .modal-body-product { grid-template-columns: 1fr; text-align: center; } }
+        .modal-img { width: 100%; height: 220px; object-fit: cover; border-radius: 8px; }
+        .characteristics { font-size: 12px; opacity: 0.85; margin: 15px 0; text-align: left; }
+        .characteristics ul { padding-left: 15px; margin-top: 5px; }
+
+        /* Formulario Bancario (Checkout) */
+        .checkout-form { display: flex; flex-direction: column; gap: 12px; margin-top: 20px; text-align: left; }
+        .checkout-form label { font-size: 11px; opacity: 0.8; margin-bottom: -8px; }
+        .checkout-form input { padding: 10px 15px; border: 1px solid var(--border-color); border-radius: 8px; background: var(--blanco); color: var(--texto-oscuro); font-family: 'Poppins', sans-serif; font-size: 12px; outline: none; }
+        .checkout-form input:focus { border-color: var(--rosa-oscuro); }
+        .form-row { display: flex; gap: 10px; }
+        .form-row input { width: 50%; }
+
+        /* Notificación Toast */
+        .toast { position: fixed; bottom: 30px; right: 30px; background-color: var(--rosa-oscuro); color: white; padding: 12px 24px; border-radius: 30px; font-size: 11px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); z-index: 5000; opacity: 0; transform: translateY(20px); pointer-events: none; transition: 0.3s; letter-spacing: 1px; text-transform: uppercase; font-weight: 600; }
+        .toast.show { opacity: 1; transform: translateY(0); }
+
+        footer { background-color: var(--footer-bg); text-align: center; padding: 25px; font-size: 12px; color: var(--footer-text); border-top: 1px solid var(--border-color); margin-top: 50px; }
+    </style>
+</head>
+<body>
+    <header>
+        <a href="index.html" class="logo">VICKY</a>
+        <nav>
+            <ul>
+                <li><a href="index.html">Inicio</a></li>
+                <li><a href="pagina de favoritos.html">Favoritos</a></li>
+                <li>
+                    <a class="cart-link" id="headerCartLink" onclick="openSidebarCart()">
+                        Carrito <span id="cartBadge" class="cart-badge">0</span>
+                    </a>
+                </li>
+                <li><button class="theme-toggle" id="themeToggle">🌙</button></li>
+            </ul>
+        </nav>
+    </header>
+
+    <div class="container">
+        <h1>Catálogo Exclusivo</h1>
+        <p class="subtitle">15 piezas seleccionadas de alta joyería</p>
+        
+        <div class="grid" id="productGrid">
+            <!-- 15 PRODUCTOS EXACTOS -->
+            <div class="card" data-name="Pulsera Moments Cierre Corazón" data-price="$1,890 MXN" data-img="https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?auto=format&fit=crop&w=500&q=80">
+                <div class="card-img"><img src="https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?auto=format&fit=crop&w=500&q=80" alt="Joyeria"></div>
+                <h3>Pulsera Moments Cierre Corazón</h3><p class="price">$1,890 MXN</p>
+                <button class="btn add-cart-btn">Agregar al Carrito</button>
+            </div>
+            <div class="card" data-name="Anillo Pavé Rosa Brillante" data-price="$1,450 MXN" data-img="https://images.unsplash.com/photo-1603561591411-07134e71a2a9?auto=format&fit=crop&w=500&q=80">
+                <div class="card-img"><img src="https://images.unsplash.com/photo-1603561591411-07134e71a2a9?auto=format&fit=crop&w=500&q=80" alt="Joyeria"></div>
+                <h3>Anillo Pavé Rosa Brillante</h3><p class="price">$1,450 MXN</p>
+                <button class="btn add-cart-btn">Agregar al Carrito</button>
+            </div>
+            <div class="card" data-name="Collar Infinito en Plata" data-price="$2,100 MXN" data-img="https://images.unsplash.com/photo-1599643477877-530eb83abc8e?auto=format&fit=crop&w=500&q=80">
+                <div class="card-img"><img src="https://images.unsplash.com/photo-1599643477877-530eb83abc8e?auto=format&fit=crop&w=500&q=80" alt="Joyeria"></div>
+                <h3>Collar Infinito en Plata</h3><p class="price">$2,100 MXN</p>
+                <button class="btn add-cart-btn">Agregar al Carrito</button>
+            </div>
+            <div class="card" data-name="Aretes Gota de Lluvia" data-price="$980 MXN" data-img="https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?auto=format&fit=crop&w=500&q=80">
+                <div class="card-img"><img src="https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?auto=format&fit=crop&w=500&q=80" alt="Joyeria"></div>
+                <h3>Aretes Gota de Lluvia</h3><p class="price">$980 MXN</p>
+                <button class="btn add-cart-btn">Agregar al Carrito</button>
+            </div>
+            <div class="card" data-name="Gargantilla Brillos Stellars" data-price="$2,350 MXN" data-img="https://imgs.search.brave.com/Tan6lxmJb9unvOyX_BDTeBTjtq1Era_nRe84BSUrll4/rs:fit:860:0:0:0/g:ce/aHR0cHM6Ly9jZG4u/d2FsbGFwb3AuY29t/L2ltYWdlcy8xMDQy/MC9sNC9jNC9fXy9j/MTA0MjBwMTI3NzA3/NDEwMC9pNjU4NjU0/MjA3Mi5qcGc_cGlj/dHVyZVNpemU9VzMy/MA">
+                <div class="card-img"><img src="https://imgs.search.brave.com/Tan6lxmJb9unvOyX_BDTeBTjtq1Era_nRe84BSUrll4/rs:fit:860:0:0:0/g:ce/aHR0cHM6Ly9jZG4u/d2FsbGFwb3AuY29t/L2ltYWdlcy8xMDQy/MC9sNC9jNC9fXy9j/MTA0MjBwMTI3NzA3/NDEwMC9pNjU4NjU0/MjA3Mi5qcGc_cGlj/dHVyZVNpemU9VzMy/MA" alt="Joyeria"></div>
+                <h3>Gargantilla Brillos Stellars</h3><p class="price">$2,350 MXN</p>
+                <button class="btn add-cart-btn">Agregar al Carrito</button>
+            </div>
+            <div class="card" data-name="Anillo Princesa Real" data-price="$1,250 MXN" data-img="https://imgs.search.brave.com/IcGtBTmVCEKoWi0P2hiGomA_RkWAd50SHZIwC-ni7X0/rs:fit:860:0:0:0/g:ce/aHR0cHM6Ly9pLmVi/YXlpbWcuY29tL2lt/YWdlcy9nL3FvY0FB/ZVN3NkJscXB4RU0v/cy1sNDAwLndlYnA">
+                <div class="card-img"><img src="https://imgs.search.brave.com/IcGtBTmVCEKoWi0P2hiGomA_RkWAd50SHZIwC-ni7X0/rs:fit:860:0:0:0/g:ce/aHR0cHM6Ly9pLmVi/YXlpbWcuY29tL2lt/YWdlcy9nL3FvY0FB/ZVN3NkJscXB4RU0v/cy1sNDAwLndlYnA" alt="Joyeria"></div>
+                <h3>Anillo Princesa Real</h3><p class="price">$1,250 MXN</p>
+                <button class="btn add-cart-btn">Agregar al Carrito</button>
+            </div>
+            <div class="card" data-name="Pulsera Rígida Signature" data-price="$2,600 MXN" data-img="https://images.unsplash.com/photo-1617038260897-41a1f14a8ca0?auto=format&fit=crop&w=500&q=80">
+                <div class="card-img"><img src="https://images.unsplash.com/photo-1617038260897-41a1f14a8ca0?auto=format&fit=crop&w=500&q=80" alt="Joyeria"></div>
+                <h3>Pulsera Rígida Signature</h3><p class="price">$2,600 MXN</p>
+                <button class="btn add-cart-btn">Agregar al Carrito</button>
+            </div>
+            <div class="card" data-name="Anillo Solitario Elegance" data-price="$1,750 MXN" data-img="https://images.unsplash.com/photo-1605100804763-247f67b3557e?auto=format&fit=crop&w=500&q=80">
+                <div class="card-img"><img src="https://images.unsplash.com/photo-1605100804763-247f67b3557e?auto=format&fit=crop&w=500&q=80" alt="Joyeria"></div>
+                <h3>Anillo Solitario Elegance</h3><p class="price">$1,750 MXN</p>
+                <button class="btn add-cart-btn">Agregar al Carrito</button>
+            </div>
+            <div class="card" data-name="Collar Corazón Colgante" data-price="$1,950 MXN" data-img="https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?auto=format&fit=crop&w=500&q=80">
+                <div class="card-img"><img src="https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?auto=format&fit=crop&w=500&q=80" alt="Joyeria"></div>
+                <h3>Collar Corazón Colgante</h3><p class="price">$1,950 MXN</p>
+                <button class="btn add-cart-btn">Agregar al Carrito</button>
+            </div>
+            <div class="card" data-name="Aretes Huggies Circonitas" data-price="$1,100 MXN" data-img="https://images.unsplash.com/photo-1630019852942-f89202989a59?auto=format&fit=crop&w=500&q=80">
+                <div class="card-img"><img src="https://images.unsplash.com/photo-1630019852942-f89202989a59?auto=format&fit=crop&w=500&q=80" alt="Joyeria"></div>
+                <h3>Aretes Huggies Circonitas</h3><p class="price">$1,100 MXN</p>
+                <button class="btn add-cart-btn">Agregar al Carrito</button>
+            </div>
+            <div class="card" data-name="Charm Colgante Zirconias" data-price="$890 MXN" data-img="https://imgs.search.brave.com/Sexcww5H4GX1cOLFWr95IdOgKuufVJA-jxlXIJ8RnQU/rs:fit:860:0:0:0/g:ce/aHR0cHM6Ly9odHRw/Mi5tbHN0YXRpYy5j/b20vRF9RX05QXzJY/XzczNDM5My1NTE00/OTQ2MDIzNzQzN18w/MzIwMjItRS1jaGFy/bS1jb2xnYW50ZS1w/YW5kb3JhLWxsYXZl/LW1hamVzdHVvc2Eu/d2VicA">
+                <div class="card-img"><img src="https://imgs.search.brave.com/Sexcww5H4GX1cOLFWr95IdOgKuufVJA-jxlXIJ8RnQU/rs:fit:860:0:0:0/g:ce/aHR0cHM6Ly9odHRw/Mi5tbHN0YXRpYy5j/b20vRF9RX05QXzJY/XzczNDM5My1NTE00/OTQ2MDIzNzQzN18w/MzIwMjItRS1jaGFy/bS1jb2xnYW50ZS1w/YW5kb3JhLWxsYXZl/LW1hamVzdHVvc2Eu/d2VicA" alt="Joyeria"></div>
+                <h3>Charm Colgante Zirconias</h3><p class="price">$890 MXN</p>
+                <button class="btn add-cart-btn">Agregar al Carrito</button>
+            </div>
+            <div class="card" data-name="Anillo Triple Banda Pavé" data-price="$2,200 MXN" data-img="https://imgs.search.brave.com/kA4M0kXHbFf5zQouUXtNBC5bVwcyuechOgfDDQFtNFM/rs:fit:860:0:0:0/g:ce/aHR0cHM6Ly9lcy5w/YW5kb3JhLm5ldC9k/dy9pbWFnZS92Mi9C/RkNSX1BSRC9vbi9k/ZW1hbmR3YXJlLnN0/YXRpYy8tL1NpdGVz/LXBhbmRvcmEtbWFz/dGVyLWNhdGFsb2cv/ZGVmYXVsdC9kd2Ji/YTEyNjcxL3Byb2R1/Y3RpbWFnZXMvc2lu/Z2xlcGFja3Nob3Rf/cmVjdF9jZW50ZXIv/MTg5MDU3QzAxX1Yz/X1JHQi5qcGc_cT03/MCZzZnJtPXBuZyZi/Z2NvbG9yPUY3RjdG/NyZzdz0zODQmc2hhcGU9cG5nJnN0eWxlPXJlc3BvbnNpdmUmc2l6ZT1XMzAwJmF1dG89Zm9ybWF0JmZpdD1jcm9wJnc9NTAwJnE9ODAmcT0x">
+                <div class="card-img"><img src="https://imgs.search.brave.com/kA4M0kXHbFf5zQouUXtNBC5bVwcyuechOgfDDQFtNFM/rs:fit:860:0:0:0/g:ce/aHR0cHM6Ly9lcy5w/YW5kb3JhLm5ldC9k/dy9pbWFnZS92Mi9C/RkNSX1BSRC9vbi9k/ZW1hbmR3YXJlLnN0/YXRpYy8tL1NpdGVz/LXBhbmRvcmEtbWFz/dGVyLWNhdGFsb2cv/ZGVmYXVsdC9kd2Ji/YTEyNjcxL3Byb2R1/Y3RpbWFnZXMvc2lu/Z2xlcGFja3Nob3Rf/cmVjdF9jZW50ZXIv/MTg5MDU3QzAxX1Yz/X1JHQi5qcGc_cT03/MCZzZnJtPXBuZyZi/Z2NvbG9yPUY3RjdG/NyZzdz0zODQ" alt="Joyeria"></div>
+                <h3>Anillo Triple Banda Pavé</h3><p class="price">$2,200 MXN</p>
+                <button class="btn add-cart-btn">Agregar al Carrito</button>
+            </div>
+            <div class="card" data-name="Collar Eslabones Modernos" data-price="$2,450 MXN" data-img="https://images.unsplash.com/photo-1602751584552-8ba73aad10e1?auto=format&fit=crop&w=500&q=80">
+                <div class="card-img"><img src="https://images.unsplash.com/photo-1602751584552-8ba73aad10e1?auto=format&fit=crop&w=500&q=80" alt="Joyeria"></div>
+                <h3>Collar Eslabones Modernos</h3><p class="price">$2,450 MXN</p>
+                <button class="btn add-cart-btn">Agregar al Carrito</button>
+            </div>
+            <div class="card" data-name="Aretes Cascada Brillante" data-price="$1,650 MXN" data-img="https://images.unsplash.com/photo-1543294001-f7cd5d7fb516?auto=format&fit=crop&w=500&q=80">
+                <div class="card-img"><img src="https://images.unsplash.com/photo-1543294001-f7cd5d7fb516?auto=format&fit=crop&w=500&q=80" alt="Joyeria"></div>
+                <h3>Aretes Cascada Brillante</h3><p class="price">$1,650 MXN</p>
+                <button class="btn add-cart-btn">Agregar al Carrito</button>
+            </div>
+            <div class="card" data-name="Pulsera Morada Clásica" data-price="$3,100 MXN" data-img="https://imgs.search.brave.com/Yaizdy5O9YOlJWijXaJyp4gHgZNH2spy3rSOnuo84Mk/rs:fit:860:0:0:0/g:ce/aHR0cHM6Ly9sYW1h/aXNvbmRlbGFtYnJl/LmNvbS8xMTAxLWhv/bWVfZGVmYXVsdC9w/dWxzZXJhLWRlLWFt/YXRpc3RhLW1vcmFk/YS1wbGF0YS05MjUt/cm9kaWFkYS1sYXJn/by1hanVzdGFibGUt/MTctMTktY20uanBn">
+                <div class="card-img"><img src="https://imgs.search.brave.com/Yaizdy5O9YOlJWijXaJyp4gHgZNH2spy3rSOnuo84Mk/rs:fit:860:0:0:0/g:ce/aHR0cHM6Ly9sYW1h/aXNvbmRlbGFtYnJl/LmNvbS8xMTAxLWhv/bWVfZGVmYXVsdC9w/dWxzZXJhLWRlLWFt/YXRpc3RhLW1vcmFk/YS1wbGF0YS05MjUt/cm9kaWFkYS1sYXJn/by1hanVzdGFibGUt/MTctMTktY20uanBn" alt="Joyeria"></div>
+                <h3>Pulsera Morada Clásica</h3><p class="price">$3,100 MXN</p>
+                <button class="btn add-cart-btn">Agregar al Carrito</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- POP-OUT / SIDEBAR DEL CARRITO -->
+    <div class="cart-overlay" id="cartOverlay" onclick="closeSidebarCart()"></div>
+    <div class="side-cart" id="sideCart">
+        <div class="side-cart-header">
+            <h2>Tu Carrito</h2>
+            <span class="close-cart" onclick="closeSidebarCart()">&times;</span>
+        </div>
+        <div class="side-cart-items" id="cartItemsContainer">
+            <!-- Aquí se inyectan los productos agregados -->
+            <div class="side-cart-empty">Tu carrito está vacío.<br>¡Agrega algunas joyas!</div>
+        </div>
+        <div class="side-cart-footer">
+            <div class="cart-total">
+                <span>Total:</span>
+                <span id="cartTotalValue">$0 MXN</span>
+            </div>
+            <button class="btn" style="padding: 12px; font-size: 12px;" onclick="openCheckout()">Pagar Ahora 🔒</button>
+        </div>
+    </div>
+
+    <!-- MODAL 1: Detalles de Producto -->
+    <div id="productModal" class="modal">
+        <div class="modal-content">
+            <span class="close-modal" onclick="closeAllModals()">&times;</span>
+            <div class="modal-body-product">
+                <div><img id="modalImg" src="" alt="Imagen de la joya" class="modal-img"></div>
+                <div>
+                    <h2 id="modalTitle" style="font-family: 'Playfair Display', serif;">Producto</h2>
+                    <p id="modalPrice" class="price" style="color: var(--rosa-oscuro); font-weight: 600; font-size: 18px;">$0.00 MXN</p>
+                    <div class="characteristics">
+                        <strong>Características exclusivas:</strong>
+                        <ul>
+                            <li>Plata esterlina ley 925 de alta durabilidad.</li>
+                            <li>Acabado pulido a mano.</li>
+                            <li>Garantía de 1 año contra defectos.</li>
+                        </ul>
+                    </div>
+                    <div class="modal-buttons" style="display: flex; flex-direction: column; gap: 8px;">
+                        <button class="btn" onclick="addToCartFromModal()">Agregar al Carrito</button>
+                        <button class="btn btn-secondary" onclick="buyNowFromModal()">Comprar Ahora</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL 2: Checkout Bancario -->
+    <div id="checkoutModal" class="modal">
+        <div class="modal-content small">
+            <span class="close-modal" onclick="closeAllModals()">&times;</span>
+            <h2 style="font-family: 'Playfair Display', serif; margin-bottom: 5px;">Pago Seguro SSL</h2>
+            <p style="font-size: 11px; opacity: 0.7;">Ingresa tus datos para finalizar la compra.</p>
+            
+            <form id="paymentForm" class="checkout-form">
+                <label>Nombre del titular</label>
+                <input type="text" placeholder="Ej. Jesus Uriel Medina" required>
+                
+                <label>Dirección de Envío</label>
+                <input type="text" placeholder="Ej. Ciudad Nicolás Romero, Edo de México" required>
+                
+                <label>Número de Tarjeta</label>
+                <input type="text" placeholder="0000 0000 0000 0000" maxlength="16" required>
+                
+                <div class="form-row">
+                    <div style="width: 50%;">
+                        <label>Vencimiento</label>
+                        <input type="text" placeholder="MM/AA" maxlength="5" required style="width: 100%;">
+                    </div>
+                    <div style="width: 50%;">
+                        <label>CVV</label>
+                        <input type="password" placeholder="123" maxlength="3" required style="width: 100%;">
+                    </div>
+                </div>
+                
+                <button type="submit" class="btn" style="padding: 12px; margin-top: 15px;">Confirmar Compra 🔒</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Notificación Toast -->
+    <div id="toast" class="toast">Mensaje de éxito</div>
+
+    <footer>
+        <p>&copy; 2026 VICKY - Joyería y Bisutería. Todos los derechos reservados.</p>
+    </footer>
+
+    <script>
+        // Tema Oscuro
+        const t = document.getElementById('themeToggle'), h = document.documentElement;
+        if (h.getAttribute('data-theme') === 'dark') t.textContent = '☀️';
+        t.onclick = () => {
+            if (h.getAttribute('data-theme') === 'dark') { h.removeAttribute('data-theme'); localStorage.setItem('theme', 'light'); t.textContent = '🌙'; } 
+            else { h.setAttribute('data-theme', 'dark'); localStorage.setItem('theme', 'dark'); t.textContent = '☀️'; }
+        };
+
+        // Lógica del Carrito y Modales
+        let cart = [];
+        const cartBadge = document.getElementById('cartBadge');
+        const cartItemsContainer = document.getElementById('cartItemsContainer');
+        const cartTotalValue = document.getElementById('cartTotalValue');
+        
+        const sideCart = document.getElementById('sideCart');
+        const cartOverlay = document.getElementById('cartOverlay');
+        
+        const productModal = document.getElementById('productModal');
+        const checkoutModal = document.getElementById('checkoutModal');
+        const toast = document.getElementById('toast');
+
+        // Referencias para el Modal de Producto
+        let currentProduct = null;
+
+        function showToast(msg) {
+            toast.textContent = msg;
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 3000);
+        }
+
+        function closeAllModals() {
+            productModal.classList.remove('active');
+            checkoutModal.classList.remove('active');
+        }
+
+        // Abrir y cerrar Side-Cart
+        function openSidebarCart() {
+            closeAllModals();
+            sideCart.classList.add('open');
+            cartOverlay.classList.add('open');
+            renderCart();
+        }
+        function closeSidebarCart() {
+            sideCart.classList.remove('open');
+            cartOverlay.classList.remove('open');
+        }
+
+        // Lógica de agregar al carrito real
+        function addItemToCart(name, priceStr, img) {
+            // Extraer el número del precio para sumar (ej. "$1,890 MXN" -> 1890)
+            const priceNum = parseInt(priceStr.replace(/[^0-9]/g, ''));
+            cart.push({ name, priceStr, priceNum, img });
+            
+            // Actualizar Badge
+            cartBadge.textContent = cart.length;
+            cartBadge.classList.add('active');
+            
+            showToast("✓ Producto agregado a tu carrito");
+            openSidebarCart(); // Abre el carrito lateral al instante
+        }
+
+        function renderCart() {
+            cartItemsContainer.innerHTML = '';
+            let total = 0;
+            
+            if (cart.length === 0) {
+                cartItemsContainer.innerHTML = '<div class="side-cart-empty">Tu carrito está vacío.<br>¡Agrega algunas joyas!</div>';
+                cartTotalValue.textContent = "$0 MXN";
+                return;
+            }
+
+            cart.forEach((item, index) => {
+                total += item.priceNum;
+                cartItemsContainer.innerHTML += `
+                    <div class="cart-item-row">
+                        <img src="${item.img}" class="cart-item-img">
+                        <div class="cart-item-details">
+                            <div class="cart-item-title">${item.name}</div>
+                            <div class="cart-item-price">${item.priceStr}</div>
+                            <div class="remove-item" onclick="removeItem(${index})">Eliminar</div>
+                        </div>
+                    </div>
+                `;
+            });
+            // Formatear total con comas
+            cartTotalValue.textContent = "$" + total.toLocaleString() + " MXN";
+        }
+
+        function removeItem(index) {
+            cart.splice(index, 1);
+            cartBadge.textContent = cart.length;
+            if (cart.length === 0) cartBadge.classList.remove('active');
+            renderCart();
+        }
+
+        // Clic en la tarjeta (Abrir Detalles)
+        document.querySelectorAll('.card').forEach(card => {
+            card.addEventListener('click', (e) => {
+                if (e.target.classList.contains('add-cart-btn')) return; 
+                
+                currentProduct = {
+                    name: card.dataset.name,
+                    price: card.dataset.price,
+                    img: card.dataset.img
+                };
+                
+                document.getElementById('modalImg').src = currentProduct.img;
+                document.getElementById('modalTitle').textContent = currentProduct.name;
+                document.getElementById('modalPrice').textContent = currentProduct.price;
+                
+                productModal.classList.add('active');
+            });
+        });
+
+        // Botón "Agregar" directo en la tarjeta
+        document.querySelectorAll('.add-cart-btn').forEach((btn, index) => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const card = btn.closest('.card');
+                addItemToCart(card.dataset.name, card.dataset.price, card.dataset.img);
+            });
+        });
+
+        // Botones dentro del Modal de Producto
+        function addToCartFromModal() {
+            if(currentProduct) addItemToCart(currentProduct.name, currentProduct.price, currentProduct.img);
+        }
+
+        function buyNowFromModal() {
+            closeAllModals();
+            if(currentProduct) {
+                // Lo agrega y te manda directo a pagar
+                const priceNum = parseInt(currentProduct.price.replace(/[^0-9]/g, ''));
+                cart.push({ name: currentProduct.name, priceStr: currentProduct.price, priceNum: priceNum, img: currentProduct.img });
+                cartBadge.textContent = cart.length;
+                cartBadge.classList.add('active');
+            }
+            openCheckout();
+        }
+
+        // Checkout y Simulación de Pago
+        function openCheckout() {
+            if (cart.length === 0) {
+                showToast("Tu carrito está vacío. Agrega productos primero.");
+                return;
+            }
+            closeSidebarCart();
+            checkoutModal.classList.add('active');
+        }
+
+        document.getElementById('paymentForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            closeAllModals();
+            showToast("✓ ¡Pago realizado con éxito! Tu orden está en proceso.");
+            // Resetear todo
+            cart = [];
+            cartBadge.classList.remove('active');
+            e.target.reset();
+        });
+
+        // Cerrar modales dando clic fuera
+        window.addEventListener('click', (e) => {
+            if (e.target.classList.contains('modal')) closeAllModals();
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Iniciar Sesión | VICKY</title>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600&family=Poppins:wght@300;400;500&display=swap" rel="stylesheet">
+    <script>
+        if (localStorage.getItem('theme') === 'dark') {
+            document.documentElement.setAttribute('data-theme', 'dark');
+        }
+    </script>
+    <style>
+        :root { --rosa-oscuro: #d4838f; --rosa-suave: #fff0f2; --texto-oscuro: #2c2c2c; --blanco: #ffffff; --border-color: #eee; --footer-bg: #faf4f5; --footer-text: #888; }
+        [data-theme="dark"] { --rosa-oscuro: #e09ba7; --rosa-suave: #1f1618; --texto-oscuro: #f3f3f3; --blanco: #121212; --border-color: #333; --footer-bg: #161616; --footer-text: #aaa; }
+        
+        * { margin: 0; padding: 0; box-sizing: border-box; transition: background-color 0.3s, color 0.3s, border-color 0.3s; }
+        body { font-family: 'Poppins', sans-serif; color: var(--texto-oscuro); background-color: var(--blanco); display: flex; flex-direction: column; min-height: 100vh; }
+        
+        header { display: flex; justify-content: space-between; align-items: center; padding: 20px 8%; border-bottom: 1px solid var(--border-color); }
+        .logo { font-family: 'Playfair Display', serif; font-size: 24px; color: var(--rosa-oscuro); text-decoration: none; letter-spacing: 2px; }
+        .theme-toggle { background: none; border: 1px solid var(--rosa-oscuro); color: var(--rosa-oscuro); width: 32px; height: 32px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+        
+        .login-container { flex: 1; display: flex; align-items: center; justify-content: center; padding: 40px 20px; }
+        .login-box { background: var(--rosa-suave); padding: 40px; border-radius: 12px; width: 100%; max-width: 400px; border: 1px solid var(--border-color); text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.05); }
+        .login-box h1 { font-family: 'Playfair Display', serif; margin-bottom: 25px; font-size: 26px; }
+        
+        .input-group { margin-bottom: 20px; text-align: left; }
+        .input-group label { display: block; font-size: 12px; margin-bottom: 5px; opacity: 0.8; }
+        .input-group input { width: 100%; padding: 10px 15px; border: 1px solid var(--border-color); border-radius: 20px; background: var(--blanco); color: var(--texto-oscuro); outline: none; font-family: 'Poppins', sans-serif; font-size: 13px; }
+        .input-group input:focus { border-color: var(--rosa-oscuro); }
+        
+        .btn { background-color: var(--rosa-oscuro); color: white; border: none; padding: 12px; width: 100%; border-radius: 20px; font-size: 12px; cursor: pointer; text-transform: uppercase; letter-spacing: 1px; font-weight: 500; }
+        .btn:hover { opacity: 0.9; }
+        .btn:disabled { opacity: 0.6; cursor: not-allowed; }
+
+        /* Notificación Toast */
+        .toast { position: fixed; bottom: 30px; right: 30px; background-color: #2e7d32; color: white; padding: 12px 24px; border-radius: 30px; font-size: 11px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); z-index: 5000; opacity: 0; transform: translateY(20px); pointer-events: none; transition: 0.3s; letter-spacing: 1px; text-transform: uppercase; font-weight: 600; }
+        .toast.show { opacity: 1; transform: translateY(0); }
+
+        footer { background-color: var(--footer-bg); text-align: center; padding: 25px; font-size: 12px; color: var(--footer-text); border-top: 1px solid var(--border-color); }
+    </style>
+</head>
+<body>
+    <header>
+        <a href="index.html" class="logo">VICKY</a>
+        <button class="theme-toggle" id="themeToggle">🌙</button>
+    </header>
+
+    <div class="login-container">
+        <div class="login-box">
+            <h1>Iniciar Sesión</h1>
+            <form id="loginForm">
+                <div class="input-group">
+                    <label>Correo Electrónico</label>
+                    <input type="email" placeholder="tucorreo@email.com" required>
+                </div>
+                <div class="input-group">
+                    <label>Contraseña</label>
+                    <input type="password" placeholder="••••••••" required>
+                </div>
+                <button type="submit" class="btn" id="loginBtn">Entrar a mi Cuenta</button>
+            </form>
+            <p style="font-size: 11px; margin-top: 15px; opacity: 0.7;">¿No tienes cuenta? <a href="#" style="color: var(--rosa-oscuro); text-decoration: none; font-weight: 600;">Regístrate aquí</a></p>
+        </div>
+    </div>
+
+    <!-- Notificación Toast -->
+    <div id="toast" class="toast">Mensaje de éxito</div>
+
+    <footer>
+        <p>&copy; 2026 VICKY - Joyería y Bisutería. Todos los derechos reservados.</p>
+    </footer>
+
+    <script>
+        // Tema Oscuro
+        const t = document.getElementById('themeToggle'), h = document.documentElement;
+        if (h.getAttribute('data-theme') === 'dark') t.textContent = '☀️';
+        t.onclick = () => {
+            if (h.getAttribute('data-theme') === 'dark') { h.removeAttribute('data-theme'); localStorage.setItem('theme', 'light'); t.textContent = '🌙'; } 
+            else { h.setAttribute('data-theme', 'dark'); localStorage.setItem('theme', 'dark'); t.textContent = '☀️'; }
+        };
+
+        // Simulación de Inicio de Sesión
+        const loginForm = document.getElementById('loginForm');
+        const loginBtn = document.getElementById('loginBtn');
+        const toast = document.getElementById('toast');
+
+        function showToast(msg) {
+            toast.textContent = msg;
+            toast.classList.add('show');
+        }
+
+        loginForm.addEventListener('submit', (e) => {
+            e.preventDefault(); // Evita que la página recargue inmediatamente
+            
+            // 1. Cambiar estado del botón a modo "Cargando"
+            loginBtn.textContent = 'Verificando... 🔒';
+            loginBtn.disabled = true;
+
+            // 2. Simular un tiempo de conexión al servidor (2 segundos)
+            setTimeout(() => {
+                loginBtn.style.backgroundColor = '#2e7d32'; // Cambia a verde de éxito
+                loginBtn.textContent = '¡Bienvenido!';
+                
+                showToast("✓ Sesión iniciada. Redirigiendo...");
+
+                // 3. Redirigir a la página principal después de mostrar el mensaje
+                setTimeout(() => {
+                    window.location.href = 'index.html';
+                }, 1500);
+                
+            }, 2000);
+        });
+    </script>
+</body>
+</html>
